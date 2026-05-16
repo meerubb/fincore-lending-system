@@ -4,14 +4,12 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# ==================== DATABASE CONNECTION ====================
 def get_db_connection():
     try:
-        # We bypass the instance name (\Zain) and go straight to the port (1433)
-        # This bypasses all the "Error Locating Server" naming issues.
+        
         conn_str = (
             "DRIVER={ODBC Driver 18 for SQL Server};"
-            "SERVER=127.0.0.1,1433;"  # <--- Use a comma then the port!
+            "SERVER=127.0.0.1,1433;"  
             "DATABASE=FinCore;"
             "Trusted_Connection=yes;"
             "TrustServerCertificate=yes;"
@@ -22,9 +20,7 @@ def get_db_connection():
     except Exception as e:
         print(f"🔴 Connection Error: {e}")
         return None
-# =============================================================
-
-# --- GUI Setup ---
+        
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
@@ -32,17 +28,17 @@ class BankEnterpriseApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Window Configuration
+       
         self.title("FinCore Banking Management System")
         self.geometry("1100x700")
 
         self.db_conn = get_db_connection()
 
-        # Split into Sidebar and Main Content Area
+        
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        # ==================== SIDEBAR ====================
+       
         self.sidebar = ctk.CTkFrame(self, width=200, corner_radius=0, fg_color="#1a1a1a")
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_rowconfigure(7, weight=1) 
@@ -50,7 +46,6 @@ class BankEnterpriseApp(ctk.CTk):
         logo_label = ctk.CTkLabel(self.sidebar, text="FinCore\nBanking", font=ctk.CTkFont(size=24, weight="bold"))
         logo_label.grid(row=0, column=0, padx=20, pady=(30, 30))
 
-        # Sidebar Buttons
         btn_dashboard = ctk.CTkButton(self.sidebar, text="Dashboard", fg_color="transparent", border_width=1, hover_color="#333333", command=self.show_dashboard)
         btn_dashboard.grid(row=1, column=0, padx=20, pady=10)
 
@@ -69,24 +64,20 @@ class BankEnterpriseApp(ctk.CTk):
         btn_audit = ctk.CTkButton(self.sidebar, text="Audit & Security", fg_color="transparent", border_width=1, hover_color="#333333", command=self.show_audit)
         btn_audit.grid(row=6, column=0, padx=20, pady=10)
 
-        # Status indicator at the bottom of sidebar
         status_text = "🟢 Connected" if self.db_conn else "🔴 Disconnected"
         status_color = "#2ecc71" if self.db_conn else "#e74c3c"
         self.status_label = ctk.CTkLabel(self.sidebar, text=status_text, text_color=status_color, font=ctk.CTkFont(size=12, weight="bold"))
         self.status_label.grid(row=7, column=0, padx=20, pady=20)
-
-        # ==================== MAIN CONTENT AREA ====================
+        
         self.main_frame = ctk.CTkFrame(self, corner_radius=10)
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
 
-        # Start by showing Dashboard
         self.show_dashboard()
 
     def clear_main_frame(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
-    # ==================== DASHBOARD ====================
     def show_dashboard(self):
         self.clear_main_frame()
         label = ctk.CTkLabel(self.main_frame, text="FinCore | Executive Dashboard", font=ctk.CTkFont(size=28, weight="bold"))
@@ -99,7 +90,7 @@ class BankEnterpriseApp(ctk.CTk):
         try:
             cursor = self.db_conn.cursor()
             
-            # --- 1. TOP METRIC CARDS ---
+    
             cursor.execute("SELECT * FROM vw_Bank_Dashboard_Stats")
             stats = cursor.fetchone()
 
@@ -133,14 +124,12 @@ class BankEnterpriseApp(ctk.CTk):
             create_card(grid_frame, "Secured Assets", f"{secured}", "#9b59b6", 1, 1)
             create_card(grid_frame, "System Status", "All Systems Optimal", "#2ecc71", 1, 2)
 
-            # --- 2. ANALYTICS CHARTS AREA ---
             chart_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
             chart_frame.pack(fill="both", expand=True, padx=20, pady=10)
             
-            # Use matplotlib with a dark background theme to match your app
+          
             plt.style.use('dark_background')
-
-            # -- Chart 1: Risk Classification Pie Chart --
+            
             cursor.execute("""
                 SELECT RiskLevel, COUNT(*) as Count 
                 FROM vw_Risk_Classification 
@@ -152,7 +141,6 @@ class BankEnterpriseApp(ctk.CTk):
                 labels = [row.RiskLevel for row in risk_data]
                 sizes = [row.Count for row in risk_data]
                 
-                # Custom colors for risk (Green, Yellow, Red)
                 color_map = {'Low Risk': '#2ecc71', 'Medium Risk': '#f39c12', 'High Risk': '#e74c3c'}
                 colors = [color_map.get(label, '#95a5a6') for label in labels]
 
@@ -165,7 +153,6 @@ class BankEnterpriseApp(ctk.CTk):
                 canvas_pie.draw()
                 canvas_pie.get_tk_widget().pack(side="left", fill="both", expand=True, padx=10)
 
-            # -- Chart 2: Loan Status Bar Chart --
             cursor.execute("""
                 SELECT 
                     CASE 
@@ -205,7 +192,6 @@ class BankEnterpriseApp(ctk.CTk):
                 ax_bar.set_ylabel("Number of Loans")
                 ax_bar.tick_params(colors='white')
                 
-                # Make background invisible so it blends perfectly
                 ax_bar.set_facecolor('#1e1e1e')
                 for spine in ax_bar.spines.values():
                     spine.set_color('#333333')
@@ -217,12 +203,11 @@ class BankEnterpriseApp(ctk.CTk):
         except Exception as e:
             print(f"Dashboard Error: {e}")
             ctk.CTkLabel(self.main_frame, text=f"Error loading dashboard stats: {e}", text_color="red").pack(pady=20)
-
-    # ==================== CUSTOMER PROFILE POPUP ====================
+=
     def show_customer_profile(self, customer_id, name):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Full Profile: {name}")
-        # Increased height from 550 to 700 to fit the loans list
+       
         popup.geometry("500x700")
         popup.attributes("-topmost", True) 
         
@@ -233,22 +218,20 @@ class BankEnterpriseApp(ctk.CTk):
         
         try:
             cursor = self.db_conn.cursor()
-            # 1. Fetch EVERYTHING from the Customer table
+            
             cursor.execute("""
                 SELECT CNIC, PhoneNumber, Email, Address, EmploymentStatus, MonthlyIncome, CreditScore, DateRegistered
                 FROM CUSTOMER WHERE CustomerID = ?
             """, (customer_id,))
             cust = cursor.fetchone()
             
-            # 2. Fetch the total amount they have borrowed across all loans
             cursor.execute("SELECT ISNULL(SUM(ApprovedAmount), 0) FROM LOAN WHERE CustomerID = ?", (customer_id,))
             total_loan = cursor.fetchone()[0]
             
             if cust:
                 info_frame = ctk.CTkFrame(popup, fg_color="#2b2b2b", corner_radius=10)
-                info_frame.pack(pady=10, padx=30, fill="x") # Changed from fill="both", expand=True so it doesn't hog space
+                info_frame.pack(pady=10, padx=30, fill="x") 
                 
-                # Prepare data to loop through and draw
                 details = [
                     ("CNIC:", cust.CNIC),
                     ("Phone:", cust.PhoneNumber),
@@ -260,17 +243,16 @@ class BankEnterpriseApp(ctk.CTk):
                     ("Total Borrowed:", f"Rs. {total_loan:,.0f}"),
                 ]
                 
-                # Draw the labels dynamically
+               
                 for i, (label, val) in enumerate(details):
                     ctk.CTkLabel(info_frame, text=label, font=ctk.CTkFont(weight="bold")).grid(row=i, column=0, sticky="w", padx=20, pady=8)
                     ctk.CTkLabel(info_frame, text=str(val)).grid(row=i, column=1, sticky="w", padx=10, pady=8)
                 
-                # Highlight the Credit Score
+               
                 score_color = "#2ecc71" if cust.CreditScore and cust.CreditScore > 700 else "#e74c3c"
                 ctk.CTkLabel(info_frame, text="Credit Score:", font=ctk.CTkFont(weight="bold")).grid(row=8, column=0, sticky="w", padx=20, pady=8)
                 ctk.CTkLabel(info_frame, text=str(cust.CreditScore), text_color=score_color, font=ctk.CTkFont(weight="bold")).grid(row=8, column=1, sticky="w", padx=10, pady=8)
 
-            # ==================== NEW: ACTIVE LOANS LIST ====================
             cursor.execute("SELECT LoanID, ApprovedAmount, LoanStartDate FROM LOAN WHERE CustomerID = ?", (customer_id,))
             loans = cursor.fetchall()
 
@@ -287,7 +269,7 @@ class BankEnterpriseApp(ctk.CTk):
                     ctk.CTkLabel(row_frame, text=f"Loan #{loan.LoanID}", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
                     ctk.CTkLabel(row_frame, text=f"Rs {loan.ApprovedAmount:,.0f}").pack(side="left", padx=10)
                     
-                    # The button that passes the specific LoanID to your EMI viewer!
+                   
                     btn_emi = ctk.CTkButton(row_frame, text="View EMI", width=80, fg_color="#8e44ad", hover_color="#9b59b6",
                                             command=lambda lid=loan.LoanID: self.show_emi_schedule(lid))
                     btn_emi.pack(side="right", padx=10)
@@ -301,27 +283,25 @@ class BankEnterpriseApp(ctk.CTk):
         ctk.CTkButton(popup, text="Close Window", command=popup.destroy, fg_color="#e74c3c", hover_color="#c0392b").pack(pady=15)
                          
 
-    # ==================== CUSTOMER CRM ====================
     def show_customers(self):
         self.clear_main_frame()
         
-       # --- 1. Header & Button Area ---
+    
         header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=20, pady=(20, 10))
         
         ctk.CTkLabel(header_frame, text="Customer CRM", font=ctk.CTkFont(size=28, weight="bold")).pack(side="left")
         
-        # Original: Add Customer Button (Green)
+       
         btn_add = ctk.CTkButton(header_frame, text="+ Add New Customer", fg_color="#27ae60", hover_color="#2ecc71",
                                 font=ctk.CTkFont(weight="bold"), command=self.open_add_customer_window)
         btn_add.pack(side="right", padx=5)
 
-        # NEW: Issue Loan Button (Blue)
+
         btn_loan = ctk.CTkButton(header_frame, text="🏦 Issue New Loan", fg_color="#2980b9", hover_color="#3498db", 
                                  font=ctk.CTkFont(weight="bold"), command=self.open_loan_application)
         btn_loan.pack(side="right", padx=5)
 
-        # --- 2. Search Bar Area ---
         search_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         search_frame.pack(fill="x", padx=20, pady=10)
         
@@ -332,7 +312,7 @@ class BankEnterpriseApp(ctk.CTk):
         btn_search = ctk.CTkButton(search_frame, text="Search 🔍", width=100, height=40, command=self.execute_customer_search)
         btn_search.pack(side="left")
 
-        # --- 3. Results List Frame ---
+      
         self.cust_list = ctk.CTkScrollableFrame(self.main_frame, fg_color="#1e1e1e")
         self.cust_list.pack(fill="both", expand=True, padx=20, pady=10)
         
@@ -348,7 +328,6 @@ class BankEnterpriseApp(ctk.CTk):
         ctk.CTkLabel(loan_window, text="Apply for New Loan", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 10))
         ctk.CTkLabel(loan_window, text="SQL Stored Procedure Engine", text_color="#f39c12", font=ctk.CTkFont(size=12)).pack(pady=(0, 20))
 
-        # Inputs
         ctk.CTkLabel(loan_window, text="Customer ID:").pack(anchor="w", padx=40)
         entry_cust_id = ctk.CTkEntry(loan_window, placeholder_text="e.g., 105", width=370)
         entry_cust_id.pack(pady=(0, 15), padx=40)
@@ -371,8 +350,7 @@ class BankEnterpriseApp(ctk.CTk):
                 duration = int(entry_duration.get())
                 
                 cursor = self.db_conn.cursor()
-                
-                # --- LETTING SQL DO THE WORK ---
+               
                 cursor.execute("EXEC sp_Apply_For_Loan @CustomerID=?, @RequestedAmount=?, @DurationMonths=?", 
                                (cust_id, amount, duration))
                 
@@ -395,7 +373,7 @@ class BankEnterpriseApp(ctk.CTk):
             except Exception as e:
                 result_label.configure(text=f"Database Error:\n{str(e)}", text_color="#e74c3c")
 
-        # Submit Button
+      
         ctk.CTkButton(loan_window, text="Run Analysis & Apply", height=40, font=ctk.CTkFont(weight="bold"), command=process_application).pack(pady=10, padx=40, fill="x")
  
 
@@ -407,7 +385,7 @@ class BankEnterpriseApp(ctk.CTk):
 
         ctk.CTkLabel(emi_window, text=f"Repayment Schedule (Loan ID: {loan_id})", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=20)
 
-        # Table Header
+      
         header_frame = ctk.CTkFrame(emi_window, fg_color="#333333", height=30)
         header_frame.pack(fill="x", padx=20, pady=5)
         ctk.CTkLabel(header_frame, text="Inst. #", width=50, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
@@ -415,13 +393,13 @@ class BankEnterpriseApp(ctk.CTk):
         ctk.CTkLabel(header_frame, text="EMI Amount", width=120, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
         ctk.CTkLabel(header_frame, text="Status", width=100, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
 
-        # Scrollable List
+       
         list_frame = ctk.CTkScrollableFrame(emi_window, fg_color="#1e1e1e")
         list_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
         try:
             cursor = self.db_conn.cursor()
-            # Fetch the EMIs we just generated!
+            
             cursor.execute("""
                 SELECT InstallmentNumber, DueDate, ScheduledAmount, PaymentMethod 
                 FROM PAYMENT 
@@ -439,14 +417,13 @@ class BankEnterpriseApp(ctk.CTk):
                 row_frame = ctk.CTkFrame(list_frame, fg_color="#2b2b2b", height=35)
                 row_frame.pack(fill="x", pady=2)
                 
-                # Safely format the date
+              
                 due_date = row.DueDate.strftime('%Y-%m-%d') if row.DueDate else "N/A"
                 
                 ctk.CTkLabel(row_frame, text=row.InstallmentNumber, width=50).pack(side="left", padx=10)
                 ctk.CTkLabel(row_frame, text=due_date, width=120).pack(side="left", padx=10)
                 ctk.CTkLabel(row_frame, text=f"Rs {row.ScheduledAmount:,.2f}", width=120).pack(side="left", padx=10)
-                
-                # Make 'Pending' yellow, and paid items green
+            
                 status_color = "#f1c40f" if row.PaymentMethod == "Pending" else "#2ecc71"
                 ctk.CTkLabel(row_frame, text=row.PaymentMethod, width=100, text_color=status_color).pack(side="left", padx=10)
 
@@ -466,7 +443,7 @@ class BankEnterpriseApp(ctk.CTk):
             cursor = self.db_conn.cursor()
             if default_view or not search_term:
                 cursor.execute("SELECT TOP 15 CustomerID, FirstName, LastName, CNIC, PhoneNumber, CreditScore FROM CUSTOMER ORDER BY CustomerID DESC")
-            # Inside your execute_customer_search function:
+         
             else:
                 query = """
                 SELECT CustomerID, FirstName, LastName, CNIC, PhoneNumber, CreditScore 
@@ -477,7 +454,7 @@ class BankEnterpriseApp(ctk.CTk):
                 OR (CAST(CustomerID AS VARCHAR) = ? AND ? <> '')
                 """
                 wild = f"%{search_term}%"
-                # We pass search_term twice: once for the comparison, once for the empty check
+                
                 cursor.execute(query, (wild, wild, wild, search_term, search_term))
                 
             rows = cursor.fetchall()
@@ -486,7 +463,6 @@ class BankEnterpriseApp(ctk.CTk):
                 ctk.CTkLabel(self.cust_list, text="No customers found.", text_color="gray").pack(pady=40)
                 return
 
-            # ... (the rest of your UI building code stays exactly the same)
             header = ctk.CTkFrame(self.cust_list, fg_color="#333333", height=40)
             header.pack(fill="x", padx=10, pady=(0, 5))
             ctk.CTkLabel(header, text="ID", width=50, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
@@ -683,10 +659,9 @@ class BankEnterpriseApp(ctk.CTk):
             print(f"SQL Error: {e}")
 
     
-    # ==================== CUSTOMER ANALYTICS (PAGINATED) ====================
     def show_risk_management(self):
         self.clear_main_frame()
-        # 1. Header renamed to reflect both good (Prime) and bad (Defaulters) data
+        
         label = ctk.CTkLabel(self.main_frame, text="FinCore | Customer Analytics", font=ctk.CTkFont(size=28, weight="bold"))
         label.pack(pady=(20, 10), padx=20, anchor="w")
 
@@ -694,17 +669,16 @@ class BankEnterpriseApp(ctk.CTk):
             ctk.CTkLabel(self.main_frame, text="🔴 Database Not Connected", text_color="red").pack(pady=20)
             return
 
-        # --- Set up the Tabs ---
+       
         tabview = ctk.CTkTabview(self.main_frame)
         tabview.pack(fill="both", expand=True, padx=20, pady=10)
+
         
-        # 2. Added the Prime tab
         tab_prime = tabview.add("Prime Customers") 
         tab_watchlist = tabview.add("Defaulter Watchlist")
         tab_risk = tabview.add("Risk Classification")
 
-        # --- Set up the Scrollable Frames ---
-        # 3. Added the Prime scrollable frame
+    
         scroll_prime = ctk.CTkScrollableFrame(tab_prime, fg_color="transparent")
         scroll_prime.pack(fill="both", expand=True)
 
@@ -714,25 +688,21 @@ class BankEnterpriseApp(ctk.CTk):
         scroll_risk = ctk.CTkScrollableFrame(tab_risk, fg_color="transparent")
         scroll_risk.pack(fill="both", expand=True)
 
-        # --- Pagination Trackers ---
-        self.prime_offset = 0  # 4. Added Prime tracker
+        self.prime_offset = 0 
         self.watchlist_offset = 0
         self.risk_offset = 0
         self.load_limit = 50
 
-        # --- The "Load More" Buttons ---
         btn_more_prime = ctk.CTkButton(scroll_prime, text="Load More", command=lambda: load_prime_batch()) # 5. Added Prime button
         btn_more_watchlist = ctk.CTkButton(scroll_watchlist, text="Load More", command=lambda: load_watchlist_batch())
         btn_more_risk = ctk.CTkButton(scroll_risk, text="Load More", command=lambda: load_risk_batch())
 
 
-        # ==========================================
-        # 0. PRIME CUSTOMERS BATCH LOADER (THE GOOD)
-        # ==========================================
+    
         def load_prime_batch():
             try:
                 cursor = self.db_conn.cursor()
-                # Query the raw CUSTOMER table, sorting by highest credit score first
+               
                 query = f"""
                     SELECT CustomerID, FirstName, LastName, CreditScore, MonthlyIncome 
                     FROM CUSTOMER 
@@ -750,24 +720,22 @@ class BankEnterpriseApp(ctk.CTk):
                 btn_more_prime.pack_forget()
 
                 for row in records:
-                    # --- EYE-CATCHING PRIME CARD (Gold Theme) ---
+                  
                     card = ctk.CTkFrame(scroll_prime, fg_color="#2b2b2b", corner_radius=10, border_width=1, border_color="#f1c40f")
                     card.pack(fill="x", pady=8, padx=10)
                     
-                    # Left Side: Name & Premium Tag
                     info_frame = ctk.CTkFrame(card, fg_color="transparent")
                     info_frame.pack(side="left", padx=15, pady=10, fill="x", expand=True)
                     
                     ctk.CTkLabel(info_frame, text=f"🌟 {row.FirstName} {row.LastName}", font=ctk.CTkFont(size=18, weight="bold")).pack(anchor="w")
                     ctk.CTkLabel(info_frame, text="STATUS: PRIME / PRE-APPROVED", text_color="#f1c40f", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", pady=(2, 0))
 
-                    # Right Side: Credit Score & Income
                     stats_frame = ctk.CTkFrame(card, fg_color="transparent")
                     stats_frame.pack(side="right", padx=20, pady=10)
                     
                     ctk.CTkLabel(stats_frame, text=f"Income: Rs. {row.MonthlyIncome:,.2f}", text_color="#a4b0be", font=ctk.CTkFont(size=12)).pack(anchor="e")
                     ctk.CTkLabel(stats_frame, text=f"Score: {row.CreditScore}", text_color="#2ecc71", font=ctk.CTkFont(size=22, weight="bold")).pack(anchor="e")
-                    # ----------------------------------------
+                
 
                 self.prime_offset += self.load_limit
                 
@@ -781,13 +749,11 @@ class BankEnterpriseApp(ctk.CTk):
                 print(f"Prime Load Error: {e}")
 
 
-        # ==========================================
-        # 1. WATCHLIST BATCH LOADER
-        # ==========================================
+      
         def load_watchlist_batch():
             try:
                 cursor = self.db_conn.cursor()
-                # SQL Server Pagination Query
+                
                 query = f"""
                     SELECT * FROM vw_Defaulter_Watchlist 
                     ORDER BY TotalFines DESC 
@@ -797,41 +763,39 @@ class BankEnterpriseApp(ctk.CTk):
                 cursor.execute(query)
                 records = cursor.fetchall()
                 
-                # If no more records exist, disable the button
+
                 if not records:
                     btn_more_watchlist.configure(text="No More Records", state="disabled")
                     return
 
-                # Temporarily remove the button from the screen so we can append new rows above it
+                
                 btn_more_watchlist.pack_forget()
 
                 for row in records:
-                    # --- EYE-CATCHING WATCHLIST CARD ---
-                    # Card background with a red border to indicate danger/default
+
+                    
                     card = ctk.CTkFrame(scroll_watchlist, fg_color="#2b2b2b", corner_radius=10, border_width=1, border_color="#c0392b")
                     card.pack(fill="x", pady=8, padx=10)
-                    
-                    # Left Side: Name & Default Status
+                  
                     info_frame = ctk.CTkFrame(card, fg_color="transparent")
                     info_frame.pack(side="left", padx=15, pady=10, fill="x", expand=True)
                     
                     ctk.CTkLabel(info_frame, text=f"👤 {row.DefaulterName}", font=ctk.CTkFont(size=18, weight="bold")).pack(anchor="w")
                     
-                    # Bold red defaulted tag
                     ctk.CTkLabel(info_frame, text="⚠️ STATUS: ACCOUNT DEFAULTED", text_color="#ff4757", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", pady=(2, 0))
 
-                    # Right Side: Fines Amount
+                   
                     fine_frame = ctk.CTkFrame(card, fg_color="transparent")
                     fine_frame.pack(side="right", padx=20, pady=10)
                     
                     ctk.CTkLabel(fine_frame, text="Total Fines Due", text_color="#a4b0be", font=ctk.CTkFont(size=12)).pack(anchor="e")
                     ctk.CTkLabel(fine_frame, text=f"Rs. {row.TotalFines:,.2f}", text_color="#ffa502", font=ctk.CTkFont(size=20, weight="bold")).pack(anchor="e")
-                    # ----------------------------------------
+                    
 
-                # Update the tracker (we loaded 50, so next time skip 50)
+             
                 self.watchlist_offset += self.load_limit
                 
-                # Slap the "Load More" button back at the very bottom
+               
                 if len(records) == self.load_limit:
                     btn_more_watchlist.pack(pady=20)
                 else:
@@ -841,14 +805,11 @@ class BankEnterpriseApp(ctk.CTk):
             except Exception as e:
                 print(f"Watchlist Load Error: {e}")
 
-        # ==========================================
-        # RISK CLASSIFICATION BATCH LOADER
-        # ==========================================
+    
         def load_risk_batch():
             try:
                 cursor = self.db_conn.cursor()
-                
-                # BYPASS THE VIEW: Query CUSTOMER table directly so we know exactly what columns we have!
+             
                 query = f"""
                     SELECT 
                         FirstName, 
@@ -874,39 +835,37 @@ class BankEnterpriseApp(ctk.CTk):
                 btn_more_risk.pack_forget()
 
                 for row in records:
-                    # We now 100% guarantee these columns exist because of our direct query above
+                  
                     cust_name = f"{row.FirstName} {row.LastName}"
                     risk_level = row.RiskLevel
                     
                     if 'HIGH' in risk_level.upper():
-                        border_color = "#e74c3c" # Red
+                        border_color = "#e74c3c" 
                         text_color = "#ff4757"
                     elif 'LOW' in risk_level.upper():
-                        border_color = "#2ecc71" # Green
+                        border_color = "#2ecc71"
                         text_color = "#2ed573"
                     else:
-                        border_color = "#f39c12" # Yellow/Orange
+                        border_color = "#f39c12"
                         text_color = "#ffa502"
 
-                    # --- EYE-CATCHING RISK CARD ---
                     card = ctk.CTkFrame(scroll_risk, fg_color="#2b2b2b", corner_radius=10, border_width=1, border_color=border_color)
                     card.pack(fill="x", pady=8, padx=10)
                     
-                    # Left Side: Name & Risk Level
+                  
                     info_frame = ctk.CTkFrame(card, fg_color="transparent")
                     info_frame.pack(side="left", padx=15, pady=10, fill="x", expand=True)
                     
                     ctk.CTkLabel(info_frame, text=f"👤 {cust_name}", font=ctk.CTkFont(size=18, weight="bold")).pack(anchor="w")
                     ctk.CTkLabel(info_frame, text=f"Risk Classification: {risk_level.upper()}", text_color=text_color, font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", pady=(2, 0))
 
-                    # Right Side: Credit Score
+                   
                     score_frame = ctk.CTkFrame(card, fg_color="transparent")
                     score_frame.pack(side="right", padx=20, pady=10)
                     
                     ctk.CTkLabel(score_frame, text="Credit Score", text_color="#a4b0be", font=ctk.CTkFont(size=12)).pack(anchor="e")
                     ctk.CTkLabel(score_frame, text=f"{row.CreditScore}", font=ctk.CTkFont(size=22, weight="bold")).pack(anchor="e")
-                    # ----------------------------------------
-
+                  
                 self.risk_offset += self.load_limit
                 
                 if len(records) == self.load_limit:
@@ -918,8 +877,6 @@ class BankEnterpriseApp(ctk.CTk):
             except Exception as e:
                 print(f"Risk Load Error: {e}")
 
-
-        # --- Fire the first batches when the tab opens! ---
         load_prime_batch()
         load_watchlist_batch()
         load_risk_batch()
@@ -944,12 +901,11 @@ class BankEnterpriseApp(ctk.CTk):
                 loan_id = int(entry_loan_id.get().strip())
                 cursor = self.db_conn.cursor()
                 
-                # Execute your stored procedure!
                 cursor.execute("EXEC sp_ForgiveLateFines @TargetLoanID=?", (loan_id,))
                 self.db_conn.commit()
                 
                 print(f"Fines forgiven for Loan {loan_id}")
-                self.show_risk_management() # Refresh the tabs to see fines drop to 0!
+                self.show_risk_management() 
                 popup.destroy()
             except ValueError:
                 status_label.configure(text="Please enter a valid number.")
@@ -958,7 +914,7 @@ class BankEnterpriseApp(ctk.CTk):
 
         ctk.CTkButton(popup, text="Execute Procedure", fg_color="#27ae60", hover_color="#2ecc71", command=submit_forgive).pack(pady=10)
 
-    # ==================== LEDGER / HISTORY ====================
+  
     def open_history_window(self, loan_id, customer_name):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Financial Ledger: {customer_name}")
@@ -973,7 +929,7 @@ class BankEnterpriseApp(ctk.CTk):
         try:
             cursor = self.db_conn.cursor()
             
-            # --- 1. THE MATH: Calculate the exact financial standing ---
+          
             query_summary = """
             SELECT 
                 L.ApprovedAmount, 
@@ -1017,7 +973,7 @@ class BankEnterpriseApp(ctk.CTk):
                     row3.pack(fill="x", pady=(0, 10), padx=15)
                     ctk.CTkLabel(row3, text=f"🚨 DEFAULTED: {loan_info.ReasonForDefault}", text_color="#c0392b", font=ctk.CTkFont(weight="bold")).pack(side="left")
 
-            # --- 2. THE RECEIPTS ---
+        
             history_list = ctk.CTkScrollableFrame(popup, fg_color="#1e1e1e", height=250)
             history_list.pack(pady=10, padx=20, fill="both", expand=True)
             
@@ -1060,7 +1016,7 @@ class BankEnterpriseApp(ctk.CTk):
             print(f"History SQL Error: {e}")
             ctk.CTkLabel(popup, text="Error loading ledger.", text_color="red").pack(pady=20)
 
-    # ==================== PAYMENTS SECTION ====================
+   
     def show_payments(self):
         self.clear_main_frame()
         
@@ -1130,7 +1086,7 @@ class BankEnterpriseApp(ctk.CTk):
         
         ctk.CTkLabel(popup, text="Record New Loan Payment", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(20, 5))
 
-        # --- STEP 1: Search by Customer ID ---
+       
         search_frame = ctk.CTkFrame(popup, fg_color="transparent")
         search_frame.pack(fill="x", padx=40, pady=10)
         
@@ -1138,7 +1094,7 @@ class BankEnterpriseApp(ctk.CTk):
         entry_cust_id = ctk.CTkEntry(search_frame, width=150, placeholder_text="e.g. 1")
         entry_cust_id.pack(side="left", padx=(0, 10))
         
-        # We will store the fetched loans in this dictionary to access their hidden Loan IDs
+       
         self.current_loans = {} 
         
         loan_dropdown = ctk.CTkOptionMenu(popup, width=370, values=["Fetch loans first..."])
@@ -1152,7 +1108,7 @@ class BankEnterpriseApp(ctk.CTk):
                 cid = int(entry_cust_id.get().strip())
                 cursor = self.db_conn.cursor()
                 
-                # Fetching the customer's loans and how much they have paid
+            
                 query = """
                 SELECT 
                     L.LoanID,
@@ -1201,16 +1157,15 @@ class BankEnterpriseApp(ctk.CTk):
                     f"👤 Customer: {data['name']}\n"
                     f"💰 Total Loan: Rs. {data['total']:,.0f}\n"
                     f"📉 Remaining Balance: Rs. {data['remaining']:,.0f}\n"
-                    f"📅 Standard Monthly Installment: View Loan Terms" # Generic placeholder, you can map exact formulas here later if needed
+                    f"📅 Standard Monthly Installment: View Loan Terms" 
                 )
                 info_label.configure(text=info_text, text_color="#3498db")
 
-        # When the dropdown changes, update the text label automatically
         loan_dropdown.configure(command=update_info_label)
 
         ctk.CTkButton(search_frame, text="Fetch Loans", width=100, fg_color="#8e44ad", hover_color="#9b59b6", command=fetch_customer_loans).pack(side="left")
 
-        # --- STEP 2: Enter Payment Details ---
+    
         ctk.CTkLabel(popup, text="Amount Paid (Rs.):").pack(anchor="w", padx=40)
         entry_amount = ctk.CTkEntry(popup, width=370)
         entry_amount.pack(pady=(0, 10))
@@ -1229,7 +1184,7 @@ class BankEnterpriseApp(ctk.CTk):
                 return
                 
             try:
-                # We pull the hidden Loan ID from the dictionary!
+              
                 lid = self.current_loans[selected]["id"]
                 amt = float(entry_amount.get().strip())
                 meth = entry_method.get()
@@ -1247,7 +1202,6 @@ class BankEnterpriseApp(ctk.CTk):
 
         ctk.CTkButton(popup, text="Record Payment", fg_color="#27ae60", hover_color="#2ecc71", width=370, command=submit_payment).pack(pady=10)
 
-    # ==================== AUDIT LOG SECTION ====================
     def show_audit(self):
         self.clear_main_frame()
         
@@ -1262,7 +1216,7 @@ class BankEnterpriseApp(ctk.CTk):
         
         if not self.db_conn: return
 
-        # Static Header Row
+       
         header = ctk.CTkFrame(log_list, fg_color="#333333", height=40)
         header.pack(fill="x", padx=10, pady=(0, 5))
         ctk.CTkLabel(header, text="Log ID", width=60, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=5)
@@ -1272,7 +1226,7 @@ class BankEnterpriseApp(ctk.CTk):
         ctk.CTkLabel(header, text="Old Value", width=100, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=5)
         ctk.CTkLabel(header, text="New Value", width=100, font=ctk.CTkFont(weight="bold")).pack(side="left", padx=5)
 
-        # Pagination Trackers
+      
         self.audit_offset = 0
         self.load_limit = 50
         btn_more_audit = ctk.CTkButton(log_list, text="Load More", command=lambda: load_audit_batch())
@@ -1325,10 +1279,8 @@ class BankEnterpriseApp(ctk.CTk):
             except Exception as e:
                 print(f"Audit Log Error: {e}")
 
-        # Fire first batch
         load_audit_batch()
 
-# ==================== MAIN EXECUTION ====================
 if __name__ == "__main__":
     app = BankEnterpriseApp()
     app.mainloop()
