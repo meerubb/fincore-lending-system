@@ -23,8 +23,8 @@ ACID-compliant integrity controls.
 Final project — Introduction to DBMS · FAST-NUCES Lahore · BS Financial Technology · 2026
 
 ## Contributors
-Meerub Nadeem 
-Syed Zain Ali
-Hadia InayatUllah
-Affaf Kashif
+Meerub Nadeem,
+Syed Zain Ali,
+Hadia InayatUllah,
+Affaf Kashif,
 Maheera Yasir
